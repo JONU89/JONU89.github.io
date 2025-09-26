@@ -1,516 +1,467 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Menu, X, ArrowRight, Code, Zap, Mail, Github, Linkedin, Download, Users, Briefcase, BookOpen, Smile } from 'lucide-react';
-
-// --- CONFIGURATION AND DATA ---
-
-// 1. Color Palette (Using requested hex values)
-const COLORS = {
-    // #1E293B is a very dark slate/navy blue, used for headers and primary backgrounds.
-    DARK_BLUE: '#1E293B', 
-    LIGHT_GRAY: '#F8FAFC', // Secondary (Section backgrounds)
-    ORANGE: '#FB923C', // Accent (CTAs, Highlights)
-    WHITE: '#FFFFFF', // Card backgrounds
-    MEDIUM_GRAY: '#64748B', // Secondary text
-};
-
-// 2. Project Placeholder Data (Filling in Section 6)
-const projectsData = [
-    {
-        title: "ECG Analysis Platform",
-        description: "A web application for real-time ECG signal processing and visualization using a Python backend. This was a core BTech project.",
-        role: "Full-Stack Developer & Lead Architect",
-        tech: ["Python", "Django", "React", "D3.js"],
-        demoLink: "#project-detail-ecg",
-        githubLink: "https://github.com/JONU89/ecg-",
-    },
-    {
-        title: "E-commerce Headless CMS",
-        description: "A custom headless CMS built for small e-commerce sites, focusing on scalable product data management and API design.",
-        role: "Backend Specialist",
-        tech: ["Node.js", "Express", "MongoDB", "Redux"],
-        demoLink: "#project-detail-cms",
-        githubLink: "https://github.com/JONU89/ecg-",
-    },
-    {
-        title: "Task Management PWA",
-        description: "A Progressive Web Application designed for offline-first task and time management with customizable Kanban-style boards.",
-        role: "Frontend Developer",
-        tech: ["Vue.js", "Tailwind CSS", "IndexedDB", "PWA"],
-        demoLink: "#project-detail-pwa",
-        githubLink: "https://github.com/JONU89/ecg-",
-    },
-    {
-        title: "Decentralized Voting System",
-        description: "A secure, blockchain-based system proof-of-concept for transparent voting using smart contracts and a Web3 integration.",
-        role: "Blockchain Integrator",
-        tech: ["Solidity", "Hardhat", "Web3.js", "React"],
-        demoLink: "#project-detail-voting",
-        githubLink: "https://github.com/JONU89/ecg-",
-    },
-    {
-        title: "AI Chatbot Microservice",
-        description: "A small, scalable microservice providing a conversational interface integrated into existing client websites.",
-        role: "Backend & NLP Engineer",
-        tech: ["Python", "Flask", "Gemini API", "Docker"],
-        demoLink: "#project-detail-chatbot",
-        githubLink: "https://github.com/JONU89/ecg-",
-    },
-];
-
-// 3. Skills Data
-const skillsData = [
-    { icon: <Code className="w-6 h-6 text-orange-500" />, name: 'React / Vue.js', category: 'Frontend' },
-    { icon: <Zap className="w-6 h-6 text-orange-500" />, name: 'Python / Django', category: 'Backend' },
-    { icon: <BookOpen className="w-6 h-6 text-orange-500" />, name: 'JavaScript / TypeScript', category: 'Languages' },
-    { icon: <Users className="w-6 h-6 text-orange-500" />, name: 'PostgreSQL / MongoDB', category: 'Database' },
-    { icon: <Briefcase className="w-6 h-6 text-orange-500" />, name: 'Tailwind CSS', category: 'Styling' },
-    { icon: <Smile className="w-6 h-6 text-orange-500" />, name: 'Git / GitHub', category: 'Tools' },
-];
-
-// --- UTILITY COMPONENTS ---
-
-// Custom hook for typing effect
-const useTypingEffect = (text, speed = 70) => {
-    const [displayedText, setDisplayedText] = useState('');
-    const [index, setIndex] = useState(0);
-
-    useEffect(() => {
-        if (index < text.length) {
-            const timeoutId = setTimeout(() => {
-                setDisplayedText((prev) => prev + text.charAt(index));
-                setIndex((prev) => prev + 1);
-            }, speed);
-            return () => clearTimeout(timeoutId);
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jonu Sara Jacob | Full-Stack Developer Portfolio</title>
+    <!-- Load Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide Icons for aesthetic icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <style>
+        /* Apply Inter font globally and set primary background */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1E293B; /* Primary background color */
         }
-    }, [index, text, speed]);
+        /* Custom scroll padding for fixed header */
+        html {
+            scroll-padding-top: 5rem; /* Matches header height for smooth scrolling offset */
+        }
+    </style>
+    <!-- Configure Tailwind to use the custom color palette -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-dark': '#1E293B',   /* Dark Blue */
+                        'secondary-light': '#F8FAFC', /* Light Gray */
+                        'accent-orange': '#FB923C',  /* Bright Orange */
+                        'text-secondary': '#64748B', /* Medium Gray */
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-slate-900">
 
-    return displayedText;
-};
-
-// Custom Button Component
-const Button = ({ children, primary = true, link = '#', icon, onClick, type = 'button', className = '' }) => {
-    const baseClasses = "flex items-center space-x-2 px-6 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-[1.03] focus:outline-none focus:ring-4 focus:ring-offset-2";
-    const primaryClasses = `bg-[${COLORS.ORANGE}] text-white shadow-xl shadow-orange-500/30 focus:ring-orange-500`;
-    const secondaryClasses = `border-2 border-[${COLORS.ORANGE}] text-[${COLORS.ORANGE}] hover:bg-[${COLORS.ORANGE}] hover:text-white focus:ring-orange-500`;
-
-    if (type === 'submit') {
-        return (
-            <button type="submit" onClick={onClick} className={`${baseClasses} ${primary ? primaryClasses : secondaryClasses} ${className}`}>
-                <span>{children}</span>
-                {icon}
-            </button>
-        );
-    }
-
-    return (
-        <a href={link} onClick={onClick} className={`${baseClasses} ${primary ? primaryClasses : secondaryClasses} ${className}`}>
-            <span>{children}</span>
-            {icon}
-        </a>
-    );
-};
-
-// --- LAYOUT COMPONENTS ---
-
-// 1. Header Component (Sticky)
-const Header = ({ scrollToSection }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    const navItems = [
-        { name: "About", id: "about" },
-        { name: "Projects", id: "projects" },
-        { name: "Contact", id: "contact" },
-    ];
-
-    const handleScroll = (id) => {
-        scrollToSection(id);
-        setIsOpen(false);
-    };
-
-    return (
-        <header className={`sticky top-0 z-50 transition-colors duration-300`} style={{ backgroundColor: COLORS.DARK_BLUE }}>
-            <div className="container mx-auto px-6 lg:px-8">
-                <div className="flex justify-between items-center py-4">
-                    <h1 className="text-2xl font-bold text-white tracking-wider">
-                        <a href="#hero" onClick={() => handleScroll('hero')}>JONU S. JACOB</a>
-                    </h1>
-                    {/* Desktop Navigation */}
-                    <nav className="hidden lg:flex space-x-8 items-center">
-                        {navItems.map(item => (
-                            <a key={item.id} href={`#${item.id}`} onClick={() => handleScroll(item.id)}
-                                className={`text-sm font-medium transition-colors text-white hover:text-[${COLORS.ORANGE}]`}>
-                                {item.name}
-                            </a>
-                        ))}
-                        <Button primary={false} link="#" icon={<Download className="w-4 h-4" />}>
-                            Download Resume
-                        </Button>
-                    </nav>
-
-                    {/* Mobile Menu Button */}
-                    <button className="lg:hidden text-white p-2 rounded-lg hover:bg-slate-700 transition-colors" onClick={() => setIsOpen(!isOpen)}>
-                        {isOpen ? <X size={28} /> : <Menu size={28} />}
-                    </button>
-                </div>
-            </div>
-
-            {/* Mobile Menu */}
-            <div className={`lg:hidden absolute w-full transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-96 py-4' : 'max-h-0'}`} style={{ backgroundColor: COLORS.DARK_BLUE }}>
-                <nav className="flex flex-col space-y-4 px-6">
-                    {navItems.map(item => (
-                        <a key={item.id} href={`#${item.id}`} onClick={() => handleScroll(item.id)}
-                            className="text-lg font-medium text-white hover:text-[${COLORS.ORANGE}] transition-colors border-b border-slate-700 pb-2">
-                            {item.name}
-                        </a>
-                    ))}
-                    <a href="#" className="text-lg font-medium text-white hover:text-[${COLORS.ORANGE}] pt-2">
-                        <Download className="inline w-5 h-5 mr-2" /> Download Resume
+    <!-- Header (Sticky Navigation) -->
+    <header id="header" class="sticky top-0 z-50 shadow-lg" style="background-color: #1E293B;">
+        <div class="container mx-auto px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <h1 class="text-2xl font-bold text-white tracking-wider">
+                    <a href="#hero" onclick="scrollToSection('hero')">JONU S. JACOB</a>
+                </h1>
+                <!-- Desktop Navigation -->
+                <nav class="hidden lg:flex space-x-8 items-center">
+                    <a href="#about" onclick="scrollToSection('about')" class="text-sm font-medium transition-colors text-white hover:text-accent-orange">About</a>
+                    <a href="#projects" onclick="scrollToSection('projects')" class="text-sm font-medium transition-colors text-white hover:text-accent-orange">Projects</a>
+                    <a href="#contact" onclick="scrollToSection('contact')" class="text-sm font-medium transition-colors text-white hover:text-accent-orange">Contact</a>
+                    <!-- Secondary CTA: Download Resume -->
+                    <a href="#" class="flex items-center space-x-2 px-6 py-3 rounded-full font-semibold transition-all duration-300 border-2 border-accent-orange text-accent-orange hover:bg-accent-orange hover:text-white transform hover:scale-[1.03]">
+                        <span>Download Resume</span>
+                        <i data-lucide="download" class="w-4 h-4"></i>
                     </a>
                 </nav>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-button" class="lg:hidden text-white p-2 rounded-lg hover:bg-slate-700 transition-colors">
+                    <i data-lucide="menu" id="menu-icon" class="w-7 h-7"></i>
+                    <i data-lucide="x" id="close-icon" class="w-7 h-7 hidden"></i>
+                </button>
             </div>
-        </header>
-    );
-};
+        </div>
 
-// 2. Hero Section
-const HeroSection = ({ scrollToSection }) => {
-    const typingText = useTypingEffect("Crafting Web Experiences That Actually Work", 70);
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="lg:hidden absolute w-full transition-all duration-300 ease-in-out max-h-0 overflow-hidden" style="background-color: #1E293B;">
+            <nav class="flex flex-col space-y-4 px-6 py-4">
+                <a href="#about" onclick="handleMobileNav('about')" class="text-lg font-medium text-white hover:text-accent-orange transition-colors border-b border-slate-700 pb-2">About</a>
+                <a href="#projects" onclick="handleMobileNav('projects')" class="text-lg font-medium text-white hover:text-accent-orange transition-colors border-b border-slate-700 pb-2">Projects</a>
+                <a href="#contact" onclick="handleMobileNav('contact')" class="text-lg font-medium text-white hover:text-accent-orange transition-colors border-b border-slate-700 pb-2">Contact</a>
+                <a href="#" class="text-lg font-medium text-white hover:text-accent-orange pt-2">
+                    <i data-lucide="download" class="inline w-5 h-5 mr-2"></i> Download Resume
+                </a>
+            </nav>
+        </div>
+    </header>
 
-    return (
-        <section id="hero" className="min-h-screen flex items-center pt-20" style={{ backgroundColor: COLORS.DARK_BLUE, color: COLORS.WHITE }}>
-            <div className="container mx-auto px-6 lg:px-8 text-center py-20">
-                <p className="text-xl font-medium" style={{ color: COLORS.ORANGE }}>
-                    Hello, I'm Jonu Sara Jacob.
-                </p>
-                <h2 className="text-5xl lg:text-7xl font-extrabold mt-4 mb-6 leading-tight">
-                    Full-Stack Developer
-                </h2>
-                <p className="text-lg lg:text-2xl font-light mb-10 min-h-[30px]" style={{ color: COLORS.MEDIUM_GRAY }}>
-                    {typingText}
-                    {/* Pulsing cursor simulation */}
-                    <span className='ml-1 inline-block w-0.5 h-6 lg:h-8 bg-white align-bottom animate-pulse'></span>
-                </p>
-                <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-                    <Button onClick={() => scrollToSection('projects')} icon={<ArrowRight className="w-5 h-5" />}>
-                        View My Work
-                    </Button>
-                    <Button primary={false} link="#" icon={<Download className="w-5 h-5" />}>
-                        Download Resume
-                    </Button>
-                </div>
+    <!-- 1. Home/Hero Section -->
+    <section id="hero" class="min-h-screen flex items-center pt-20" style="background-color: #1E293B; color: #FFFFFF;">
+        <div class="container mx-auto px-6 lg:px-8 text-center py-20">
+            <p class="text-xl font-medium text-accent-orange">
+                Hello, I'm Jonu Sara Jacob.
+            </p>
+            <h2 class="text-5xl lg:text-7xl font-extrabold mt-4 mb-6 leading-tight">
+                Full-Stack Developer
+            </h2>
+            <p id="typing-text-container" class="text-lg lg:text-2xl font-light mb-10 min-h-[30px]" style="color: #64748B;">
+                <!-- Typing text destination -->
+                <span id="typing-text"></span>
+                <!-- Animated Cursor -->
+                <span class='ml-1 inline-block w-0.5 h-6 lg:h-8 bg-white align-bottom animate-pulse'></span>
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <!-- Primary CTA: View My Work -->
+                <a href="#projects" onclick="scrollToSection('projects')" class="flex items-center justify-center space-x-2 px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-[1.03] focus:outline-none focus:ring-4 focus:ring-offset-2 bg-accent-orange text-white shadow-xl shadow-orange-500/30 focus:ring-accent-orange">
+                    <span>View My Work</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </a>
+                <!-- Secondary CTA: Download Resume -->
+                <a href="#" class="flex items-center justify-center space-x-2 px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-[1.03] focus:outline-none focus:ring-4 focus:ring-offset-2 border-2 border-accent-orange text-accent-orange hover:bg-accent-orange hover:text-white">
+                    <span>Download Resume</span>
+                    <i data-lucide="download" class="w-5 h-5"></i>
+                </a>
             </div>
-        </section>
-    );
-};
+        </div>
+    </section>
 
-// 3. About Section
-const AboutSection = ({ scrollToSection }) => {
-    // Bio paragraph from the prompt
-    const bioText = "Hey there! I'm Jonu Sara Jacob – a passionate student who loves turning wild ideas into pixel-perfect reality. Currently crushing my BTech (Class of 2028). I've been exploring all the fields since my first year. My superpower? Building seamless web experiences that make users go 'wow, that just works!' From crafting responsive frontends with React and Vue to architecting robust backends with Python and Django, I speak fluent code in multiple dialects. When I'm not debugging at 2 AM (okay, maybe I am), you'll find me exploring the latest web technologies, creating digital designs in Illustrator, or helping teams bring their visions to life through clear communication and solid project management. I believe great software isn't just about clean code – it's about solving real problems for real people. Ready to build something amazing together?";
+    <!-- 2. About Section -->
+    <section id="about" class="py-20 bg-secondary-light">
+        <div class="container mx-auto px-6 lg:px-8">
+            <!-- About Me Title -->
+            <h3 class="text-4xl font-bold mb-4 text-center text-primary-dark">
+                The Human Behind the Code
+            </h3>
+            <p class="text-xl text-center mb-16 text-text-secondary">
+                Meet the Developer
+            </p>
 
-    return (
-        <section id="about" className="py-20" style={{ backgroundColor: COLORS.LIGHT_GRAY }}>
-            <div className="container mx-auto px-6 lg:px-8">
-                {/* About Me Title */}
-                <h3 className="text-4xl font-bold mb-4 text-center" style={{ color: COLORS.DARK_BLUE }}>
-                    The Human Behind the Code
-                </h3>
-                <p className="text-xl text-center mb-16" style={{ color: COLORS.MEDIUM_GRAY }}>
-                    Meet the Developer
-                </p>
-
-                <div className="grid lg:grid-cols-3 gap-12 items-start">
-                    {/* Bio & CTA */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="p-8 rounded-xl shadow-lg" style={{ backgroundColor: COLORS.WHITE }}>
-                            {/* Professional Photo Placeholder */}
-                            <img
-                                src="https://placehold.co/120x120/1E293B/FFFFFF?text=JSJ"
-                                alt="Jonu Sara Jacob"
-                                className="w-32 h-32 rounded-full mb-6 mx-auto lg:mx-0 object-cover border-4"
-                                style={{ borderColor: COLORS.ORANGE }}
-                            />
-                            <p className="text-lg leading-relaxed" style={{ color: COLORS.DARK_BLUE }}>
-                                {bioText}
-                            </p>
-                        </div>
-                        <div className="flex justify-center lg:justify-start">
-                            <Button onClick={() => scrollToSection('contact')} icon={<Mail className="w-5 h-5" />}>
-                                Let's Build Something
-                            </Button>
-                        </div>
+            <div class="grid lg:grid-cols-3 gap-12 items-start">
+                <!-- Bio & CTA -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="p-8 rounded-xl shadow-lg bg-white">
+                        <!-- Professional Photo Placeholder -->
+                        <img
+                            src="https://placehold.co/120x120/1E293B/FFFFFF?text=JSJ"
+                            alt="Jonu Sara Jacob"
+                            class="w-32 h-32 rounded-full mb-6 mx-auto lg:mx-0 object-cover border-4 border-accent-orange"
+                        />
+                        <p class="text-lg leading-relaxed text-primary-dark">
+                            Hey there! I'm Jonu Sara Jacob – a passionate student who loves turning wild ideas into pixel-perfect reality. Currently crushing my BTech (Class of 2028). I've been exploring all the fields since my first year. My superpower? Building seamless web experiences that make users go "wow, that just works!" From crafting responsive frontends with React and Vue to architecting robust backends with Python and Django, I speak fluent code in multiple dialects. When I'm not debugging at 2 AM (okay, maybe I am), you'll find me exploring the latest web technologies, creating digital designs in Illustrator, or helping teams bring their visions to life through clear communication and solid project management. I believe great software isn't just about clean code – it's about solving real problems for real people. Ready to build something amazing together?
+                        </p>
                     </div>
-
-                    {/* Skills Grid */}
-                    <div className="lg:col-span-1">
-                        <h4 className="text-2xl font-semibold mb-6" style={{ color: COLORS.DARK_BLUE }}>
-                            My Technical Toolbox
-                        </h4>
-                        <div className="space-y-4">
-                            {skillsData.map((skill, index) => (
-                                <div key={index} className="flex items-center p-4 rounded-xl shadow-md transition-all duration-300 hover:shadow-xl hover:ring-2 hover:ring-orange-500" style={{ backgroundColor: COLORS.WHITE }}>
-                                    <div className="mr-4 p-2 rounded-full bg-orange-100">
-                                        {skill.icon}
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold" style={{ color: COLORS.DARK_BLUE }}>{skill.name}</p>
-                                        <p className="text-xs uppercase" style={{ color: COLORS.MEDIUM_GRAY }}>{skill.category}</p>
-                                    </div>
-                                    <div className="ml-auto">
-                                        {/* Micro CTA */}
-                                        <ArrowRight onClick={() => scrollToSection('projects')} className="w-5 h-5 text-orange-500 cursor-pointer transition-transform duration-300 hover:scale-110" title="See It In Action" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                    <div class="flex justify-center lg:justify-start">
+                        <!-- Primary CTA: Let's Build Something -->
+                        <a href="#contact" onclick="scrollToSection('contact')" class="flex items-center justify-center space-x-2 px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-[1.03] focus:outline-none focus:ring-4 focus:ring-offset-2 bg-accent-orange text-white shadow-xl shadow-orange-500/30 focus:ring-accent-orange">
+                            <span>Let's Build Something</span>
+                            <i data-lucide="mail" class="w-5 h-5"></i>
+                        </a>
                     </div>
                 </div>
-            </div>
-        </section>
-    );
-};
 
-// 4. Projects Section
-const ProjectsSection = () => {
-    // Project Card Component
-    const ProjectCard = ({ project }) => (
-        <div className="rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1" style={{ backgroundColor: COLORS.WHITE }}>
-            <div className="p-6">
-                <h4 className="text-2xl font-bold mb-2" style={{ color: COLORS.DARK_BLUE }}>{project.title}</h4>
-                <p className="text-sm font-medium mb-3" style={{ color: COLORS.ORANGE }}>{project.role}</p>
-                <p className="mb-4 text-sm" style={{ color: COLORS.MEDIUM_GRAY }}>{project.description}</p>
-                <div className="flex flex-wrap gap-2 mb-6">
-                    {project.tech.map(tech => (
-                        <span key={tech} className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200" style={{ color: COLORS.DARK_BLUE }}>
-                            {tech}
-                        </span>
-                    ))}
-                </div>
-                <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-                    <Button link={project.demoLink} primary={true} className='w-full justify-center sm:w-auto !py-2 !px-4 !text-sm'>
-                        See Live Demo
-                    </Button>
-                    <Button link={project.githubLink} primary={false} className='w-full justify-center sm:w-auto !py-2 !px-4 !text-sm' icon={<Github className="w-4 h-4" />}>
-                        Check GitHub
-                    </Button>
+                <!-- Skills Grid (My Technical Toolbox) -->
+                <div class="lg:col-span-1">
+                    <h4 class="text-2xl font-semibold mb-6 text-primary-dark">
+                        My Technical Toolbox
+                    </h4>
+                    <div class="space-y-4">
+                        <!-- Skill Cards (repeat for all 6 skills) -->
+                        <div class="flex items-center p-4 rounded-xl shadow-md transition-all duration-300 hover:shadow-xl hover:ring-2 hover:ring-accent-orange bg-white">
+                            <div class="mr-4 p-2 rounded-full bg-orange-100"><i data-lucide="code" class="w-6 h-6 text-orange-500"></i></div>
+                            <div><p class="font-semibold text-primary-dark">React / Vue.js</p><p class="text-xs uppercase text-text-secondary">Frontend</p></div>
+                            <i data-lucide="arrow-right" onclick="scrollToSection('projects')" class="w-5 h-5 text-orange-500 cursor-pointer transition-transform duration-300 hover:scale-110 ml-auto" title="See It In Action"></i>
+                        </div>
+                        <div class="flex items-center p-4 rounded-xl shadow-md transition-all duration-300 hover:shadow-xl hover:ring-2 hover:ring-accent-orange bg-white">
+                            <div class="mr-4 p-2 rounded-full bg-orange-100"><i data-lucide="zap" class="w-6 h-6 text-orange-500"></i></div>
+                            <div><p class="font-semibold text-primary-dark">Python / Django</p><p class="text-xs uppercase text-text-secondary">Backend</p></div>
+                            <i data-lucide="arrow-right" onclick="scrollToSection('projects')" class="w-5 h-5 text-orange-500 cursor-pointer transition-transform duration-300 hover:scale-110 ml-auto" title="See It In Action"></i>
+                        </div>
+                        <div class="flex items-center p-4 rounded-xl shadow-md transition-all duration-300 hover:shadow-xl hover:ring-2 hover:ring-accent-orange bg-white">
+                            <div class="mr-4 p-2 rounded-full bg-orange-100"><i data-lucide="book-open" class="w-6 h-6 text-orange-500"></i></div>
+                            <div><p class="font-semibold text-primary-dark">JavaScript / TypeScript</p><p class="text-xs uppercase text-text-secondary">Languages</p></div>
+                            <i data-lucide="arrow-right" onclick="scrollToSection('projects')" class="w-5 h-5 text-orange-500 cursor-pointer transition-transform duration-300 hover:scale-110 ml-auto" title="See It In Action"></i>
+                        </div>
+                        <div class="flex items-center p-4 rounded-xl shadow-md transition-all duration-300 hover:shadow-xl hover:ring-2 hover:ring-accent-orange bg-white">
+                            <div class="mr-4 p-2 rounded-full bg-orange-100"><i data-lucide="users" class="w-6 h-6 text-orange-500"></i></div>
+                            <div><p class="font-semibold text-primary-dark">PostgreSQL / MongoDB</p><p class="text-xs uppercase text-text-secondary">Database</p></div>
+                            <i data-lucide="arrow-right" onclick="scrollToSection('projects')" class="w-5 h-5 text-orange-500 cursor-pointer transition-transform duration-300 hover:scale-110 ml-auto" title="See It In Action"></i>
+                        </div>
+                        <div class="flex items-center p-4 rounded-xl shadow-md transition-all duration-300 hover:shadow-xl hover:ring-2 hover:ring-accent-orange bg-white">
+                            <div class="mr-4 p-2 rounded-full bg-orange-100"><i data-lucide="briefcase" class="w-6 h-6 text-orange-500"></i></div>
+                            <div><p class="font-semibold text-primary-dark">Tailwind CSS</p><p class="text-xs uppercase text-text-secondary">Styling</p></div>
+                            <i data-lucide="arrow-right" onclick="scrollToSection('projects')" class="w-5 h-5 text-orange-500 cursor-pointer transition-transform duration-300 hover:scale-110 ml-auto" title="See It In Action"></i>
+                        </div>
+                        <div class="flex items-center p-4 rounded-xl shadow-md transition-all duration-300 hover:shadow-xl hover:ring-2 hover:ring-accent-orange bg-white">
+                            <div class="mr-4 p-2 rounded-full bg-orange-100"><i data-lucide="smile" class="w-6 h-6 text-orange-500"></i></div>
+                            <div><p class="font-semibold text-primary-dark">Git / GitHub</p><p class="text-xs uppercase text-text-secondary">Tools</p></div>
+                            <i data-lucide="arrow-right" onclick="scrollToSection('projects')" class="w-5 h-5 text-orange-500 cursor-pointer transition-transform duration-300 hover:scale-110 ml-auto" title="See It In Action"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    );https://github.com/JONU89/JONU89.github.io
+    </section>
 
-    return (
-        <section id="projects" className="py-20" style={{ backgroundColor: COLORS.DARK_BLUE, color: COLORS.WHITE }}>
-            <div className="container mx-auto px-6 lg:px-8">
-                {/* Projects Title */}
-                <h3 className="text-4xl font-bold mb-4 text-center">
-                    Things I've Built
-                </h3>
-                <p className="text-xl text-center mb-16" style={{ color: COLORS.MEDIUM_GRAY }}>
-                    From Concept to Code
-                </p>
+    <!-- 3. Projects Section -->
+    <section id="projects" class="py-20" style="background-color: #1E293B; color: #FFFFFF;">
+        <div class="container mx-auto px-6 lg:px-8">
+            <!-- Projects Title -->
+            <h3 class="text-4xl font-bold mb-4 text-center">Things I've Built</h3>
+            <p class="text-xl text-center mb-16 text-text-secondary">From Concept to Code</p>
 
-                {/* Featured Project Spotlight */}
-                <div className="mb-20 p-8 lg:p-12 rounded-2xl shadow-2xl transition-transform duration-500 hover:scale-[1.01]" style={{ backgroundColor: COLORS.ORANGE, color: COLORS.WHITE }}>
-                    <p className="text-sm uppercase font-semibold mb-2">Featured Build</p>
-                    <h4 className="text-3xl lg:text-4xl font-extrabold mb-4">{projectsData[0].title}</h4>
-                    <p className="text-lg mb-6">{projectsData[0].description}</p>
-                    <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                        <Button link={projectsData[0].demoLink} primary={true} className="!bg-white text-orange-500 hover:!bg-gray-100">
-                            View Case Study
-                        </Button>
-                        <Button link={projectsData[0].githubLink} primary={false} className="!border-white text-white hover:!bg-white hover:!text-orange-500">
-                            <Github className="w-5 h-5" /> GitHub
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Project Grid */}
-                <h4 className="text-3xl font-bold mb-8 text-center" style={{ color: COLORS.WHITE }}>Latest Creations</h4>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {projectsData.slice(1).map((project, index) => (
-                        <ProjectCard key={index} project={project} />
-                    ))}
-                </div>
-            </div>
-        </section>
-    );
-};
-
-// 5. Contact Section
-const ContactSection = () => {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [message, setMessage] = useState('');
-    const [isSent, setIsSent] = useState(false);
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Placeholder for actual form submission logic
-        console.log('Form Submitted:', { name, email, message });
-        setIsSent(true);
-        setName('');
-        setEmail('');
-        setMessage('');
-
-        // Reset status message after 5 seconds
-        setTimeout(() => setIsSent(false), 5000);
-    };
-
-    return (
-        <section id="contact" className="py-20" style={{ backgroundColor: COLORS.LIGHT_GRAY }}>
-            <div className="container mx-auto px-6 lg:px-8">
-                {/* Contact Title */}
-                <h3 className="text-4xl font-bold mb-4 text-center" style={{ color: COLORS.DARK_BLUE }}>
-                    Let's Create Together
-                </h3>
-                <p className="text-xl text-center mb-16" style={{ color: COLORS.MEDIUM_GRAY }}>
-                    Ready to Connect?
-                </p>
-
-                <div className="max-w-3xl mx-auto p-8 rounded-xl shadow-2xl" style={{ backgroundColor: COLORS.WHITE }}>
-                    {isSent && (
-                        <div className="p-4 mb-6 rounded-lg bg-green-100 text-green-700 font-medium text-center border border-green-300">
-                            Message Sent! Thank you for reaching out.
-                        </div>
-                    )}
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label htmlFor="name" className="block text-sm font-medium mb-2" style={{ color: COLORS.DARK_BLUE }}>Name</label>
-                            <input
-                                type="text"
-                                id="name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition duration-150"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium mb-2" style={{ color: COLORS.DARK_BLUE }}>Email</label>
-                            <input
-                                type="email"
-                                id="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition duration-150"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="message" className="block text-sm font-medium mb-2" style={{ color: COLORS.DARK_BLUE }}>Message</label>
-                            <textarea
-                                id="message"
-                                rows="4"
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition duration-150"
-                                required
-                            ></textarea>
-                        </div>
-                        <Button type="submit" primary={true} className='w-full justify-center'>
-                            Send Message
-                        </Button>
-                    </form>
-
-                    {/* Social Links & Availability */}
-                    <div className="mt-10 pt-6 border-t border-slate-200 text-center">
-                        <p className="font-semibold mb-4" style={{ color: COLORS.DARK_BLUE }}>Or connect with me directly:</p>
-                        <div className="flex justify-center space-x-6">
-                            {/* Direct Email Link */}
-                            <a href="mailto:jonusaraofcl26@gmail.com" className={`text-2xl transition-colors hover:text-[${COLORS.ORANGE}]`} title="Email: jonusaraofcl26@gmail.com">
-                                <Mail size={32} />
-                            </a>
-                            {/* GitHub Link */}
-                            <a href="https://github.com/JONU89/ecg-" target="_blank" rel="noopener noreferrer" className={`text-2xl transition-colors hover:text-[${COLORS.ORANGE}]`} title="GitHub">
-                                <Github size={32} />
-                            </a>
-                            {/* LinkedIn Link (Placeholder) */}
-                            <a href="#" target="_blank" rel="noopener noreferrer" className={`text-2xl transition-colors hover:text-[${COLORS.ORANGE}]`} title="LinkedIn">
-                                <Linkedin size={32} />
-                            </a>
-                        </div>
-                        <div className="mt-8 text-sm font-medium">
-                            {/* Availability Badge */}
-                            <span className={`inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-green-700 font-semibold border border-green-300`}>
-                                <div className="w-2.5 h-2.5 mr-2 rounded-full bg-green-500 animate-pulse"></div>
-                                Currently Available for New Opportunities
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    );
-};
-
-// 6. Footer Component
-const Footer = ({ scrollToSection }) => {
-    return (
-        <footer className="py-8" style={{ backgroundColor: COLORS.DARK_BLUE, color: COLORS.MEDIUM_GRAY }}>
-            <div className="container mx-auto px-6 lg:px-8 text-center">
-                <p className="mb-4 text-lg">
-                    <a href="mailto:jonusaraofcl26@gmail.com" className={`hover:text-[${COLORS.ORANGE}] transition-colors`}>
-                        jonusaraofcl26@gmail.com
+            <!-- Featured Project Spotlight (Project 1: ECG Analysis Platform) -->
+            <div class="mb-20 p-8 lg:p-12 rounded-2xl shadow-2xl transition-transform duration-500 hover:scale-[1.01]" style="background-color: #FB923C; color: #FFFFFF;">
+                <p class="text-sm uppercase font-semibold mb-2">Featured Build</p>
+                <h4 class="text-3xl lg:text-4xl font-extrabold mb-4">ECG Analysis Platform</h4>
+                <p class="text-lg mb-6">A web application for real-time ECG signal processing and visualization using a Python backend. This was a core BTech project.</p>
+                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                    <a href="#project-detail-ecg" class="flex items-center justify-center space-x-2 px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-[1.03] focus:outline-none focus:ring-4 focus:ring-offset-2 bg-white text-orange-500 shadow-xl shadow-orange-500/30 hover:bg-gray-100">
+                        View Case Study
                     </a>
-                </p>
-                <div className="flex justify-center space-x-6 mb-4">
-                    <a href="#hero" onClick={() => scrollToSection('hero')} className={`text-sm hover:text-[${COLORS.ORANGE}] transition-colors`}>Home</a>
-                    <span className='text-sm text-slate-500'>|</span>
-                    <a href="#projects" onClick={() => scrollToSection('projects')} className={`text-sm hover:text-[${COLORS.ORANGE}] transition-colors`}>Projects</a>
-                    <span className='text-sm text-slate-500'>|</span>
-                    <a href="#" className={`text-sm hover:text-[${COLORS.ORANGE}] transition-colors`}>Download Resume</a>
+                    <a href="https://github.com/JONU89/ecg-" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center space-x-2 px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-[1.03] focus:outline-none focus:ring-4 focus:ring-offset-2 border-2 border-white text-white hover:bg-white hover:text-orange-500">
+                        <i data-lucide="github" class="w-5 h-5"></i>
+                        <span>GitHub</span>
+                    </a>
                 </div>
-                <p className="text-sm pt-4 border-t border-slate-700 mt-4">
-                    © {new Date().getFullYear()} Jonu Sara Jacob. Built with React and Tailwind CSS.
-                </p>
             </div>
-        </footer>
-    );
-};
 
-// --- MAIN APP COMPONENT ---
-
-export default function App() {
-    // Function to handle smooth scrolling to sections
-    const scrollToSection = useCallback((id) => {
-        const element = document.getElementById(id);
-        if (element) {
-            window.scrollTo({
-                top: element.offsetTop - 70, // Offset for sticky header
-                behavior: 'smooth'
-            });
-        }
-    }, []);
-
-    // Set document title and body background
-    useEffect(() => {
-        document.title = "Jonu Sara Jacob | Full-Stack Developer";
-        // Ensure the entire app uses the Inter font family
-        document.body.style.fontFamily = 'Inter, sans-serif';
-        // Set body background for a consistent look above the fold
-        document.body.style.backgroundColor = COLORS.DARK_BLUE;
-    }, []);
-
-    return (
-        <div className="min-h-screen antialiased">
-            <style>
-                {/* Importing the Inter font and setting root styles */}
-                {`
-                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-                    
-                    html {
-                        scroll-padding-top: 70px; /* Offset for sticky header when using fragment identifiers */
-                    }
-                `}
-            </style>
-            <Header scrollToSection={scrollToSection} />
-            <main>
-                <HeroSection scrollToSection={scrollToSection} />
-                <AboutSection scrollToSection={scrollToSection} />
-                <ProjectsSection />
-                <ContactSection />
-            </main>
-            <Footer scrollToSection={scrollToSection} />
+            <!-- Project Grid -->
+            <h4 class="text-3xl font-bold mb-8 text-center text-white">Latest Creations</h4>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+                <!-- Project 2: E-commerce Headless CMS -->
+                <div class="rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-white">
+                    <div class="p-6">
+                        <h4 class="text-2xl font-bold mb-2 text-primary-dark">E-commerce Headless CMS</h4>
+                        <p class="text-sm font-medium mb-3 text-accent-orange">Backend Specialist</p>
+                        <p class="mb-4 text-sm text-text-secondary">A custom headless CMS built for small e-commerce sites, focusing on scalable product data management and API design.</p>
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200 text-primary-dark">Node.js</span>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200 text-primary-dark">Express</span>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200 text-primary-dark">MongoDB</span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                            <a href="#project-detail-cms" class="flex items-center justify-center sm:w-auto w-full space-x-2 px-4 py-2 text-sm rounded-full font-semibold transition-all duration-300 transform hover:scale-[1.03] bg-accent-orange text-white">See Live Demo</a>
+                            <a href="https://github.com/JONU89/ecg-" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center sm:w-auto w-full space-x-2 px-4 py-2 text-sm rounded-full font-semibold transition-all duration-300 border-2 border-accent-orange text-accent-orange hover:bg-accent-orange hover:text-white">
+                                <i data-lucide="github" class="w-4 h-4"></i><span>Check GitHub</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 3: Task Management PWA -->
+                <div class="rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-white">
+                    <div class="p-6">
+                        <h4 class="text-2xl font-bold mb-2 text-primary-dark">Task Management PWA</h4>
+                        <p class="text-sm font-medium mb-3 text-accent-orange">Frontend Developer</p>
+                        <p class="mb-4 text-sm text-text-secondary">A Progressive Web Application designed for offline-first task and time management with customizable Kanban-style boards.</p>
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200 text-primary-dark">Vue.js</span>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200 text-primary-dark">Tailwind CSS</span>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200 text-primary-dark">PWA</span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                            <a href="#project-detail-pwa" class="flex items-center justify-center sm:w-auto w-full space-x-2 px-4 py-2 text-sm rounded-full font-semibold transition-all duration-300 transform hover:scale-[1.03] bg-accent-orange text-white">See Live Demo</a>
+                            <a href="https://github.com/JONU89/ecg-" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center sm:w-auto w-full space-x-2 px-4 py-2 text-sm rounded-full font-semibold transition-all duration-300 border-2 border-accent-orange text-accent-orange hover:bg-accent-orange hover:text-white">
+                                <i data-lucide="github" class="w-4 h-4"></i><span>Check GitHub</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 4: Decentralized Voting System -->
+                <div class="rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 bg-white">
+                    <div class="p-6">
+                        <h4 class="text-2xl font-bold mb-2 text-primary-dark">Decentralized Voting System</h4>
+                        <p class="text-sm font-medium mb-3 text-accent-orange">Blockchain Integrator</p>
+                        <p class="mb-4 text-sm text-text-secondary">A secure, blockchain-based system proof-of-concept for transparent voting using smart contracts and a Web3 integration.</p>
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200 text-primary-dark">Solidity</span>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200 text-primary-dark">Web3.js</span>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 border border-slate-200 text-primary-dark">React</span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                            <a href="#project-detail-voting" class="flex items-center justify-center sm:w-auto w-full space-x-2 px-4 py-2 text-sm rounded-full font-semibold transition-all duration-300 transform hover:scale-[1.03] bg-accent-orange text-white">See Live Demo</a>
+                            <a href="https://github.com/JONU89/ecg-" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center sm:w-auto w-full space-x-2 px-4 py-2 text-sm rounded-full font-semibold transition-all duration-300 border-2 border-accent-orange text-accent-orange hover:bg-accent-orange hover:text-white">
+                                <i data-lucide="github" class="w-4 h-4"></i><span>Check GitHub</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    );
-}
+    </section>
+
+    <!-- 4. Contact Section -->
+    <section id="contact" class="py-20 bg-secondary-light">
+        <div class="container mx-auto px-6 lg:px-8">
+            <!-- Contact Title -->
+            <h3 class="text-4xl font-bold mb-4 text-center text-primary-dark">Let's Create Together</h3>
+            <p class="text-xl text-center mb-16 text-text-secondary">Ready to Connect?</p>
+
+            <div class="max-w-3xl mx-auto p-8 rounded-xl shadow-2xl bg-white">
+                <!-- Message Box for non-alert feedback -->
+                <div id="status-message" class="p-4 mb-6 hidden rounded-lg bg-green-100 text-green-700 font-medium text-center border border-green-300">
+                    Message Sent! Thank you for reaching out.
+                </div>
+                <form id="contact-form" class="space-y-6">
+                    <div>
+                        <label for="name" class="block text-sm font-medium mb-2 text-primary-dark">Name</label>
+                        <input type="text" id="name" name="name" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent-orange focus:border-accent-orange transition duration-150" required>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium mb-2 text-primary-dark">Email</label>
+                        <input type="email" id="email" name="email" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent-orange focus:border-accent-orange transition duration-150" required>
+                    </div>
+                    <div>
+                        <label for="message" class="block text-sm font-medium mb-2 text-primary-dark">Message</label>
+                        <textarea id="message" name="message" rows="4" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent-orange focus:border-accent-orange transition duration-150" required></textarea>
+                    </div>
+                    <button type="submit" class="w-full flex items-center justify-center space-x-2 px-8 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-[1.03] focus:outline-none focus:ring-4 focus:ring-offset-2 bg-accent-orange text-white shadow-xl shadow-orange-500/30 focus:ring-accent-orange">
+                        Send Message
+                    </button>
+                </form>
+
+                <!-- Social Links & Availability -->
+                <div class="mt-10 pt-6 border-t border-slate-200 text-center">
+                    <p class="font-semibold mb-4 text-primary-dark">Or connect with me directly:</p>
+                    <div class="flex justify-center space-x-6">
+                        <!-- Direct Email Link -->
+                        <a href="mailto:jonusaraofcl26@gmail.com" class="text-3xl text-primary-dark transition-colors hover:text-accent-orange" title="Email: jonusaraofcl26@gmail.com">
+                            <i data-lucide="mail" class="w-8 h-8"></i>
+                        </a>
+                        <!-- GitHub Link -->
+                        <a href="https://github.com/JONU89/ecg-" target="_blank" rel="noopener noreferrer" class="text-3xl text-primary-dark transition-colors hover:text-accent-orange" title="GitHub">
+                            <i data-lucide="github" class="w-8 h-8"></i>
+                        </a>
+                        <!-- LinkedIn Link (Placeholder) -->
+                        <a href="#" target="_blank" rel="noopener noreferrer" class="text-3xl text-primary-dark transition-colors hover:text-accent-orange" title="LinkedIn">
+                            <i data-lucide="linkedin" class="w-8 h-8"></i>
+                        </a>
+                    </div>
+                    <div class="mt-8 text-sm font-medium">
+                        <!-- Availability Badge -->
+                        <span class="inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-green-700 font-semibold border border-green-300">
+                            <div class="w-2.5 h-2.5 mr-2 rounded-full bg-green-500 animate-pulse"></div>
+                            Currently Available for New Opportunities
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Footer Component -->
+    <footer class="py-8" style="background-color: #1E293B; color: #64748B;">
+        <div class="container mx-auto px-6 lg:px-8 text-center">
+            <p class="mb-4 text-lg">
+                <a href="mailto:jonusaraofcl26@gmail.com" class="hover:text-accent-orange transition-colors">
+                    jonusaraofcl26@gmail.com
+                </a>
+            </p>
+            <div class="flex justify-center space-x-6 mb-4">
+                <a href="#hero" onclick="scrollToSection('hero')" class="text-sm hover:text-accent-orange transition-colors">Home</a>
+                <span class='text-sm text-slate-500'>|</span>
+                <a href="#projects" onclick="scrollToSection('projects')" class="text-sm hover:text-accent-orange transition-colors">Projects</a>
+                <span class='text-sm text-slate-500'>|</span>
+                <a href="#" class="text-sm hover:text-accent-orange transition-colors">Download Resume</a>
+            </div>
+            <p class="text-sm pt-4 border-t border-slate-700 mt-4">
+                © <span id="current-year"></span> Jonu Sara Jacob. Built with HTML and Tailwind CSS.
+            </p>
+        </div>
+    </footer>
+
+    <!-- JavaScript for Functionality: Typing Effect, Smooth Scroll, Mobile Menu, Form Submission -->
+    <script>
+        // Initialize Lucide icons and set up initial state
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            setupTypingEffect();
+            setupMobileMenu();
+            setupContactForm();
+        });
+
+        // --------------------------------------------------------
+        // Typing Effect Implementation (Hero Headline)
+        // --------------------------------------------------------
+        const typingText = "Crafting Web Experiences That Actually Work";
+        const typingElement = document.getElementById('typing-text');
+        let charIndex = 0;
+        const typingSpeed = 70; // milliseconds
+
+        function setupTypingEffect() {
+            if (!typingElement) return;
+
+            const type = () => {
+                if (charIndex < typingText.length) {
+                    typingElement.textContent += typingText.charAt(charIndex);
+                    charIndex++;
+                    setTimeout(type, typingSpeed);
+                }
+            };
+            type();
+        }
+
+        // --------------------------------------------------------
+        // Smooth Scrolling Implementation
+        // --------------------------------------------------------
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                // Uses native smooth scrolling defined in the HTML root (class="scroll-smooth")
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // --------------------------------------------------------
+        // Mobile Menu Implementation
+        // --------------------------------------------------------
+        function setupMobileMenu() {
+            const button = document.getElementById('mobile-menu-button');
+            const menu = document.getElementById('mobile-menu');
+            const menuIcon = document.getElementById('menu-icon');
+            const closeIcon = document.getElementById('close-icon');
+
+            if (button && menu) {
+                button.addEventListener('click', () => {
+                    const isExpanded = menu.classList.contains('max-h-96');
+                    if (isExpanded) {
+                        // Collapse
+                        menu.classList.remove('max-h-96', 'py-4');
+                        menu.classList.add('max-h-0');
+                        menuIcon.classList.remove('hidden');
+                        closeIcon.classList.add('hidden');
+                    } else {
+                        // Expand
+                        menu.classList.add('max-h-96', 'py-4');
+                        menu.classList.remove('max-h-0');
+                        menuIcon.classList.add('hidden');
+                        closeIcon.classList.remove('hidden');
+                    }
+                });
+            }
+        }
+
+        // Handles click on mobile navigation link to scroll and close the menu
+        function handleMobileNav(id) {
+            scrollToSection(id);
+            const menu = document.getElementById('mobile-menu');
+            const menuIcon = document.getElementById('menu-icon');
+            const closeIcon = document.getElementById('close-icon');
+
+            menu.classList.remove('max-h-96', 'py-4');
+            menu.classList.add('max-h-0');
+            menuIcon.classList.remove('hidden');
+            closeIcon.classList.add('hidden');
+        }
+
+        // --------------------------------------------------------
+        // Contact Form Implementation (Client-side simulation)
+        // --------------------------------------------------------
+        function setupContactForm() {
+            const form = document.getElementById('contact-form');
+            const statusMessage = document.getElementById('status-message');
+
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    // Show confirmation message instead of alert()
+                    statusMessage.classList.remove('hidden');
+                    
+                    // Clear the form fields
+                    form.reset();
+
+                    // Hide status message after 5 seconds
+                    setTimeout(() => {
+                        statusMessage.classList.add('hidden');
+                    }, 5000);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
